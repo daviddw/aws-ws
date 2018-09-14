@@ -1,0 +1,50 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Test stack that creates an EC2 security group
+  for the instance to give you SSH access.'
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Name of an existing EC2 KeyPair to enable SSH access to the instance"
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      SecurityGroups:
+      - Ref: InstanceSecurityGroup
+      KeyName: 
+        Ref: KeyName
+      ImageId: ami-f976839e
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value:
+      Ref: EC2Instance
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value:
+      Fn::GetAtt:
+      - EC2Instance
+      - AvailabilityZone
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value:
+      Fn::GetAtt:
+      - EC2Instance
+      - PublicDnsName
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value:
+      Fn::GetAtt:
+      - EC2Instance
+      - PublicIp
