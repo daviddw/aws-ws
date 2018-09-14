@@ -1,11 +1,14 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Test stack that creates an EC2 security group
-  for the instance to give you SSH access.'
+Description: Test stack that creates an EC2 security group for the instance to give you SSH access
 Parameters:
+  ECSAMI:
+    Description: AMI ID - Ensures we use the latest amazon-linux image
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: "Name of an existing EC2 KeyPair to enable SSH access to the instance"
+    Description: Name of an EC2 KeyPair to enable SSH access
 Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
@@ -15,7 +18,8 @@ Resources:
       - Ref: InstanceSecurityGroup
       KeyName: 
         Ref: KeyName
-      ImageId: ami-f976839e
+      ImageId:
+        Ref: ECSAMI
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
