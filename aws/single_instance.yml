@@ -1,6 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Test stack that creates an EC2 security group for the instance to give you SSH access
+
 Parameters:
   ECSAMI:
     Description: AMI ID - Ensures we use the latest amazon-linux image
@@ -9,6 +10,7 @@ Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of an EC2 KeyPair to enable SSH access
+
 Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
@@ -29,6 +31,7 @@ Resources:
         FromPort: '22'
         ToPort: '22'
         CidrIp: 0.0.0.0/0
+        
 Outputs:
   InstanceId:
     Description: InstanceId of the newly created EC2 instance
