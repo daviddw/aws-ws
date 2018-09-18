@@ -1,0 +1,192 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Test stack that creates an Application Load Balancer, Load Balancer Listener, ECS cluster, ECS Service and ECS task
+
+Parameters:
+  ECSAMI:
+    Description: AMI ID - Ensures we use the latest amazon-linux image
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of an EC2 KeyPair to enable SSH access
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID
+
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of Subnet IDs
+
+  DockerImage:
+    Type: String
+    Description: Name of the task's Docker image
+
+Resources:
+  awsWsTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: aws-ws-task
+          Image: !Ref DockerImage
+          Cpu: 1
+          Memory: 128
+          PortMappings:
+            - ContainerPort: 3000
+              HostPort: 0
+              Protocol: tcp
+
+  awsWsService:
+    Type: AWS::ECS::Service
+    DependsOn: awsWsLoadBalancerListener
+    Properties:
+      ServiceName: aws-ws-service
+      Cluster: !Ref awsWsCluster
+      TaskDefinition: !Ref awsWsTaskDefinition
+      DesiredCount: 1
+      Role: !Ref awsWsServiceRole
+      LoadBalancers:
+        - ContainerName: aws-ws-task
+          ContainerPort: 3000
+          TargetGroupArn: !Ref awsWsTargetGroup
+
+  awsWsServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:  
+      - PolicyName: aws-ws-service-role
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - elasticloadbalancing:Describe*
+              - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+              - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+              - ec2:Describe*
+              - ec2:AuthorizeSecurityGroupIngress
+              - elasticloadbalancing:DeregisterTargets
+              - elasticloadbalancing:RegisterTargets
+            Resource: "*"
+
+  awsWsLaunchConfiguration:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      IamInstanceProfile: !Ref awsWsEC2InstanceProfile
+      ImageId: !Ref ECSAMI
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - !GetAtt awsWsInstanceSecurityGroup.GroupId
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          echo ECS_CLUSTER=${awsWsCluster} >> /etc/ecs/ecs.config
+
+  awsWsInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH and WS access via port 22 and 3000 respectively
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: tcp
+        FromPort: 3000
+        ToPort: 3000
+        CidrIp: 0.0.0.0/0
+
+  awsWsECSRolePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:BatchGetImage
+              - ecr:DescribeRepositories
+              - ecr:GetAuthorizationToken
+              - ecr:GetDownloadUrlForLayer
+              - ecr:GetRepositoryPolicy
+              - ecr:ListImages
+              - ecs:CreateCluster
+              - ecs:DeregisterContainerInstance
+              - ecs:DiscoverPollEndpoint
+              - ecs:Poll
+              - ecs:RegisterContainerInstance
+              - ecs:StartTask
+              - ecs:StartTelemetrySession
+              - ecs:SubmitContainerStateChange
+              - ecs:SubmitTaskStateChange
+            Resource: "*"
+
+  awsWsEC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - !Ref awsWsECSRolePolicy
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+
+  awsWsEC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref awsWsEC2Role
+
+  awsWsScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      DesiredCapacity: 1
+      MinSize: 1
+      MaxSize: 1
+      LaunchConfigurationName: !Ref awsWsLaunchConfiguration
+      VPCZoneIdentifier: !Ref SubnetIds
+
+  awsWsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: aws-ws-cluster
+
+  awsWsTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckPath : /
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+
+  awsWsLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref awsWsTargetGroup
+      LoadBalancerArn: !Ref awsWsLoadBalancer
+      Port: 3000
+      Protocol: HTTP
+
+  awsWsLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: aws-ws-loadbalancer
+      Type: application
+      Scheme: internet-facing
+      Subnets: !Ref SubnetIds
+
