@@ -24,6 +24,9 @@ Parameters:
     Description: Name of the task's Docker image
 
 Resources:
+
+# service infrastructure
+
   awsWsTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -51,6 +54,8 @@ Resources:
           ContainerPort: 3000
           TargetGroupArn: !Ref awsWsTargetGroup
 
+  # this IAM role grants the service access to register/unregister with the
+  # application load balancer
   awsWsServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -76,6 +81,26 @@ Resources:
               - elasticloadbalancing:RegisterTargets
             Resource: "*"
 
+    awsWsTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckPath : /
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+
+  awsWsLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref awsWsTargetGroup
+      LoadBalancerArn: !Ref awsWsLoadBalancer
+      Port: 3000
+      Protocol: HTTP
+      
+# ECS cluster infrastructure
+      
   awsWsLaunchConfiguration:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
@@ -84,25 +109,26 @@ Resources:
       InstanceType: t2.micro
       KeyName: !Ref KeyName
       SecurityGroups:
-        - !GetAtt awsWsInstanceSecurityGroup.GroupId
+        - !GetAtt ecsInstanceSecurityGroup.GroupId
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
           echo ECS_CLUSTER=${awsWsCluster} >> /etc/ecs/ecs.config
 
-  awsWsInstanceSecurityGroup:
+  # this security group defines who/where is allowed to access the ECS hosts directly
+  # by default we are allowing access from the load balancer and SSH from anywhere
+  ecsInstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable SSH and WS access via port 22 and 3000 respectively
+      GroupDescription: Allow SSH from all IP Addresses and WS access from the ALB only
+      VpcId: !Ref VpcId
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
         CidrIp: 0.0.0.0/0
-      - IpProtocol: tcp
-        FromPort: 3000
-        ToPort: 3000
-        CidrIp: 0.0.0.0/0
+      - SourceSecurityGroupId: !Ref albInstanceSecurityGroup
+        IpProtocol: -1
 
   awsWsECSRolePolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -129,7 +155,8 @@ Resources:
               - ecs:SubmitContainerStateChange
               - ecs:SubmitTaskStateChange
             Resource: "*"
-
+  
+  # this IAM role is attached to all ECS hosts
   awsWsEC2Role:
     Type: AWS::IAM::Role
     Properties:
@@ -164,29 +191,28 @@ Resources:
     Properties:
       ClusterName: aws-ws-cluster
 
-  awsWsTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      HealthCheckPath : /
-      Port: 3000
-      Protocol: HTTP
-      VpcId: !Ref VpcId
-
-  awsWsLoadBalancerListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref awsWsTargetGroup
-      LoadBalancerArn: !Ref awsWsLoadBalancer
-      Port: 3000
-      Protocol: HTTP
+# Application load balancer infrastructure
 
   awsWsLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: aws-ws-loadbalancer
       Type: application
+      SecurityGroups:
+        - !Ref albInstanceSecurityGroup
       Scheme: internet-facing
       Subnets: !Ref SubnetIds
+  
+  # this security group defines who/where is allowed to access the application load balancer
+  # by default we are allowing to TCP, port 3000 from anywhere
+  albInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable access to ALB via port 3000
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3000
+        ToPort: 3000
+        CidrIp: 0.0.0.0/0
 
