@@ -1,2 +1,2 @@
 # aws-ws
-WebSocket Server back by AWS
+WebSocket Server backed by AWS
