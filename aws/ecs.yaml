@@ -81,7 +81,7 @@ Resources:
               - elasticloadbalancing:RegisterTargets
             Resource: "*"
 
-    awsWsTargetGroup:
+  awsWsTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckPath : /
