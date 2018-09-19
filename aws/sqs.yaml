@@ -1,0 +1,12 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Creates an SQS
+
+Resources:
+
+  queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: queue.fifo
+      FifoQueue: true
+      ContentBasedDeduplication: true
+

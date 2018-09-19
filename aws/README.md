@@ -22,3 +22,14 @@ aws cloudformation create-stack --stack-name ecs-test-stack --template-body file
 aws cloudformation delete-stack --stack-name stack_name
 ```
 
+### Creating an SQS stack
+
+```
+aws cloudformation create-stack --stack-name sqs-test-stack --template-body file://sqs.yaml --region eu-west-1
+```
+
+### Deleting an SQS stack
+
+```
+aws cloudformation delete-stack --stack-name queue-stack --region eu-west-1
+```

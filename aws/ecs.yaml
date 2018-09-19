@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Test stack that creates an Application Load Balancer, Load Balancer Listener, ECS cluster, ECS Service and ECS task
+Description: Stack that creates an Application Load Balancer, Load Balancer Listener, ECS cluster, ECS Service and ECS task
 
 Parameters:
   ECSAMI:
