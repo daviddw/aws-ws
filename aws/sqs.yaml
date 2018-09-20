@@ -1,12 +1,33 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Creates an SQS
+Description: Creates a topic and queue with associated permissions
 
 Resources:
 
   queue:
     Type: AWS::SQS::Queue
+
+  topic:
+    Type: AWS::SNS::Topic
     Properties:
-      QueueName: queue.fifo
-      FifoQueue: true
-      ContentBasedDeduplication: true
+      Subscription:
+        - Endpoint: !GetAtt queue.Arn
+          Protocol: sqs
+
+# grants permission for topic to send a message to queue
+  queuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref queue
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principle: "*"
+            Action:
+              - sqs:SendMessage
+            Resource: "*"
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref topic
 
