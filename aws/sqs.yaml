@@ -8,10 +8,15 @@ Resources:
 
   topic:
     Type: AWS::SNS::Topic
+
+# subscribe queue to topic    
+  subscription:
+    Type: AWS::SNS::Subscription
     Properties:
-      Subscription:
-        - Endpoint: !GetAtt queue.Arn
-          Protocol: sqs
+      TopicArn: !Ref topic
+      Endpoint: !GetAtt queue.Arn
+      Protocol: sqs
+      RawMessageDelivery: true
 
 # grants permission for topic to send a message to queue
   queuePolicy:
