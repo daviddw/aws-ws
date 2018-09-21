@@ -28,7 +28,7 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Principle: "*"
+            Principal: "*"
             Action:
               - sqs:SendMessage
             Resource: "*"
