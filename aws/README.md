@@ -16,20 +16,14 @@ ssh -i ssh_key ec2-user@host
 aws cloudformation create-stack --stack-name ecs-test-stack --template-body file://ecs.yaml --capabilities CAPABILITY_IAM --parameters ParameterKey=KeyName,ParameterValue=ssh_key ParameterKey=VpcId,ParameterValue=vpc_id 'ParameterKey=SubnetIds,ParameterValue="subnet_id1, subnet_id2, ..."' ParameterKey=DockerImage,ParameterValue=docker_image
 ```
 
+### Creating an SQS stack
+
+```
+aws cloudformation create-stack --stack-name sqs-test-stack --template-body file://sqs.yaml
+```
+
 ### Deleting an AWS stack
 
 ```
 aws cloudformation delete-stack --stack-name stack_name
-```
-
-### Creating an SQS stack
-
-```
-aws cloudformation create-stack --stack-name sqs-test-stack --template-body file://sqs.yaml --region eu-west-1
-```
-
-### Deleting an SQS stack
-
-```
-aws cloudformation delete-stack --stack-name queue-stack --region eu-west-1
 ```
