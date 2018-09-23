@@ -15,7 +15,7 @@ open Fake.IO.Globbing.Operators
 // Properties
 let projectName = "aws-service-test"
 
-let configuration = Environment.getBuildParamOrDefault "configuration" ""
+let configuration = Environment.getBuildParamOrDefault "CONFIGURATION" ""
 
 let baseDir = __SOURCE_DIRECTORY__
 let sourceDir = Path.combine baseDir "src"
@@ -24,15 +24,15 @@ let projectDir = Path.combine sourceDir projectName |> Path.GetFullPath
 let buildDir = Path.combine projectDir (Path.combine "build" configuration) |> Path.GetFullPath
 let deployDir = Path.combine projectDir (Path.combine "deploy" configuration) |> Path.GetFullPath
 
-let dockerUser = Environment.environVarOrDefault "dockerUser" ""
-let tag = Environment.environVarOrDefault "tag" ""
+let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
+let tag = Environment.environVarOrDefault "DOCKERTAG" ""
 
 let dockerImage = dockerUser + "/" + projectName + ":" + tag
 
 let awsDir = Path.combine baseDir "aws"
-let sshKey = Environment.environVarOrDefault "keyname" ""
-let vpcId = Environment.environVarOrDefault "vpcid" ""
-let subnets = Environment.environVarOrDefault "subnets" ""
+let sshKey = Environment.environVarOrDefault "AWSKEYNAMW" ""
+let vpcId = Environment.environVarOrDefault "AWSVPCID" ""
+let subnets = Environment.environVarOrDefault "AWSSUBNETS" ""
 
 
 // Targets
