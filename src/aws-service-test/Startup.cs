@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Nancy.Owin;
 using aws_service_test.WebSockets;
+using aws_service_test.Connections;
 
 namespace aws_service_test
 {
@@ -19,11 +20,23 @@ namespace aws_service_test
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IConnectionManager>(x =>
+            {
+                return new ConnectionManager();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            /*var lifetime = app.ApplicationServices.GetRequiredService<IApplicationLifetime>();
+
+            lifetime.ApplicationStopped.Register(() =>
+            {
+                var manager = app.ApplicationServices.GetService<IConnectionManager>();
+                manager.Dispose();
+            });*/
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

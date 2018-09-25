@@ -2,6 +2,7 @@
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using aws_service_test.Connections;
 using Microsoft.AspNetCore.Http;
 
 namespace aws_service_test.WebSockets
@@ -9,50 +10,39 @@ namespace aws_service_test.WebSockets
     public class WebSocketManagerMiddleware
     {
         private readonly RequestDelegate next;
+        private readonly IConnectionManager manager;
 
-        public WebSocketManagerMiddleware(RequestDelegate next)
+        public WebSocketManagerMiddleware(RequestDelegate next, IConnectionManager manager)
         {
             this.next = next;
+            this.manager = manager;
         }
 
         public async Task Invoke(HttpContext context)
         {
             var socket = await context.WebSockets.AcceptWebSocketAsync();
+            var channel = new WebSocketChannel(socket);
+
+            await this.manager.Connect(channel);
 
             var buffer = new byte[1024 * 4];
 
             while (socket.State == WebSocketState.Open)
             {
-                var result = await socket.ReceiveAsync(
-                  new ArraySegment<byte>(buffer),
-                  CancellationToken.None);
+                try
+                {
+                    var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
-                if (result.MessageType == WebSocketMessageType.Close)
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        break;
+                    }
+                }
+                catch (Exception)
                 {
                     break;
                 }
             }
-
-            /*channel = new WebSocketChannel(socket, this.log);
-
-            WebSocketChannel channel = null;
-
-            try
-            {
-                await this.connectionManager.Connect(sessionId, async () =>
-                {
-                    var socket = await context.WebSockets.AcceptWebSocketAsync();
-                    channel = new WebSocketChannel(socket, this.log);
-
-                    return channel;
-                });
-
-                await channel.WaitUntilClosed();
-            }
-            catch (ConnectionException)
-            {
-                context.Response.StatusCode = 400;
-            }*/
         }
     }
 }
