@@ -21,7 +21,7 @@ let baseDir = __SOURCE_DIRECTORY__
 let sourceDir = Path.combine baseDir "src"
 let solutionDir = sourceDir
 let projectDir = Path.combine sourceDir projectName |> Path.GetFullPath
-let buildDir = Path.combine projectDir (Path.combine "build" configuration) |> Path.GetFullPath
+let buildDir = Path.combine projectDir (Path.combine "bin" configuration) |> Path.GetFullPath
 let deployDir = Path.combine projectDir (Path.combine "deploy" configuration) |> Path.GetFullPath
 
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""

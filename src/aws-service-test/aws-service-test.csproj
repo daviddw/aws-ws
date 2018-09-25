@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore" Version="2.1.3" />
     <PackageReference Include="Microsoft.AspNetCore.Owin" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,5 +19,6 @@
   <ItemGroup>
     <Folder Include="Modules\" />
     <Folder Include="WebSockets\" />
+    <Folder Include="Connections\" />
   </ItemGroup>
 </Project>
