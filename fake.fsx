@@ -25,7 +25,7 @@ let buildDir = Path.combine projectDir (Path.combine "build" configuration) |> P
 let deployDir = Path.combine projectDir (Path.combine "deploy" configuration) |> Path.GetFullPath
 
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
-let tag = Environment.environVarOrDefault "DOCKERTAG" ""
+let tag = Environment.environVarOrDefault "DOCKERTAG" "" |> fun s -> s.Replace('/', '-')
 
 let dockerImage = dockerUser + "/" + projectName + ":" + tag
 
