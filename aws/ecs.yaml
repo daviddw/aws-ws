@@ -84,7 +84,7 @@ Resources:
   awsWsTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckPath : /
+      HealthCheckPath : /health
       Port: 3000
       Protocol: HTTP
       VpcId: !Ref VpcId
