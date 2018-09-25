@@ -1,6 +1,6 @@
 # aws-ws
 
-[![Build status](https://ci.appveyor.com/api/projects/status/fg8b6w5ht84iyemx?svg=true)](https://ci.appveyor.com/project/DavidDrysdaleWilson/aws-ws)
+[![Build status](https://ci.appveyor.com/api/projects/status/fg8b6w5ht84iyemx/branch/master?svg=true)](https://ci.appveyor.com/project/DavidDrysdaleWilson/aws-ws/branch/master)
 
 WebSocket Server backed by AWS
 
