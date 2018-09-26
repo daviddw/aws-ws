@@ -47,7 +47,7 @@ Resources:
             - Name: SQSENDPOINT
               Value: !Sub http://sqs.${AWS::Region}.amazonaws.com
             - Name: DOCKERTAG
-              Value: !ref DockerTag
+              Value: !Ref DockerTag
 
   awsWsService:
     Type: AWS::ECS::Service
