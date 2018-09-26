@@ -16,6 +16,7 @@ open Fake.IO.Globbing.Operators
 let projectName = "aws-service-test"
 
 let vcsRef = Environment.environVarOrDefault "VCSREF" ""
+let buildDate = Environment.environVarOrDefault "BUILDDATE" ""
 let configuration = Environment.environVarOrDefault "CONFIGURATION" ""
 
 let baseDir = __SOURCE_DIRECTORY__
