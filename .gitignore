@@ -1,0 +1,20 @@
+## Ignore Visual Studio files
+
+*.suo
+*.user
+*.userprefs
+
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+
+.vs/
+
+## Ignore FAKE files
+.fake/
+fake.fsx.lock
+buildpackages/
+
+## Mac OS X files
+.DS_Store
