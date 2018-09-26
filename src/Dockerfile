@@ -7,9 +7,9 @@ WORKDIR /app
 COPY aws-service-test/deploy/Release .
 COPY launch.sh .
 
-ARGS VCSREF
-ARGS VERSION
-ARGS BUILDDATE
+ARG VCSREF
+ARG VERSION
+ARG BUILDDATE
 
 LABEL org.label-schema.vendor="David Drysdale-Wilson" \
       org.label-schema.build-date=$BUILDDATE \
