@@ -39,6 +39,9 @@ Resources:
             - ContainerPort: 3000
               HostPort: 0
               Protocol: tcp
+          Environment:
+            - Name: SQSENDPOINT
+              Value: !Sub http://sqs.${AWS::Region}.amazonaws.com
 
   awsWsService:
     Type: AWS::ECS::Service
