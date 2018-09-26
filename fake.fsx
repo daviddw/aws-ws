@@ -63,8 +63,7 @@ Target.create "Publish" (fun _ ->
             OutputPath = Some(deployDir)
         }) solutionDir
 
-    ignore(Shell.Exec("docker", "build -f Dockerfile -t " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION="
-	+ tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
+    ignore(Shell.Exec("docker", "build -f Dockerfile -t " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION=" + tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
 
     ignore(Shell.Exec("docker", "push " + dockerUser + "/" + projectName, sourceDir))
 )
