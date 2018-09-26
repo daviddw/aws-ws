@@ -56,7 +56,8 @@ namespace aws_service_test.Connections
 
         public async Task Send(string message)
         {
-            await Task.WhenAll(connections.Select(c => c.Send(message)));
+            var json = JsonConvert.SerializeObject(new { type = "Message", body = message });
+            await Task.WhenAll(connections.Select(c => c.Send(json)));
         }
     }
 }
