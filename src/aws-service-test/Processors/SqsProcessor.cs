@@ -78,6 +78,7 @@ namespace aws_service_test.Processors
                     Receive(m);
                 }
             }
+            catch (TaskCanceledException) { }
             catch (Exception e)
             {
                 Console.WriteLine($"Error receiving SQS message\n{e}");

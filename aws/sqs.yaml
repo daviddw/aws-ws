@@ -5,6 +5,8 @@ Resources:
 
   queue:
     Type: AWS::SQS::Queue
+    Properties:
+      QueueName: "aws-service-test-queue"
 
   topic:
     Type: AWS::SNS::Topic

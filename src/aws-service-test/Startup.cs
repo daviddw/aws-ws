@@ -12,12 +12,15 @@ using aws_service_test.WebSockets;
 using aws_service_test.Connections;
 using aws_service_test.Processors;
 using aws_service_test.Handlers;
+using Amazon.SQS.Model;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace aws_service_test
 {
     public class Startup
     {
-        private const string kServiceUrl = "";
+        private const string kQueueNamePrefix = "aws-service-test-queue";
         private const uint kWebSocketKeepAliveIntervale = 30;
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -40,14 +43,20 @@ namespace aws_service_test
             lifetime.ApplicationStarted.Register(() =>
             {
                 var config = new AmazonSQSConfig();
-                config.ServiceURL = kServiceUrl;
+                config.ServiceURL = Environment.ExpandEnvironmentVariables("%SQSENDPOINT%");
 
                 var client = new AmazonSQSClient(config);
+
+                var request = new ListQueuesRequest();
+                request.QueueNamePrefix = kQueueNamePrefix;
+
+                var queues = client.ListQueuesAsync(request).Result;
+                var sqsUrl = queues.QueueUrls.FirstOrDefault();
 
                 var manager = app.ApplicationServices.GetService<IConnectionManager>();
                 var handler = new SqsMessageHandler(manager);
 
-                processor = new SqsProcessor(client, kServiceUrl, handler);
+                processor = new SqsProcessor(client, sqsUrl, handler);
             });
 
 

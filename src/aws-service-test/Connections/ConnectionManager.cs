@@ -14,8 +14,8 @@ namespace aws_service_test.Connections
 
     public class ConnectionManager : IConnectionManager
     {
-        private readonly string kHelloMessage = JsonConvert.SerializeObject(new { type = "HELLO" });
-        private readonly string kGoodbyeMessage = JsonConvert.SerializeObject(new { type = "GOODBYE" });
+        private readonly string kHelloMessage = JsonConvert.SerializeObject(new { type = "Hello" });
+        private readonly string kGoodbyeMessage = JsonConvert.SerializeObject(new { type = "Goodbye" });
 
         private readonly List<IConnection> connections;
 
