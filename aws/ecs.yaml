@@ -34,6 +34,7 @@ Resources:
   awsWsTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
+      TaskRoleArn: !GetAtt awsWsTaskDefinitionRole.Arn
       ContainerDefinitions:
         - Name: aws-ws-task
           Image: !Ref DockerImage
@@ -48,6 +49,29 @@ Resources:
               Value: !Sub http://sqs.${AWS::Region}.amazonaws.com
             - Name: DOCKERTAG
               Value: !Ref DockerTag
+  
+  awsWsTaskDefinitionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:  
+      - PolicyName: aws-ws-taskdefinition-role
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              - sqs:GetQueueUrl
+              - sqs:ListQueues
+            Resource: "*"
 
   awsWsService:
     Type: AWS::ECS::Service
