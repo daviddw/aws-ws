@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <RootNamespace>aws_service_test</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,10 +16,13 @@
 
   <ItemGroup>
     <Content Remove="Properties\launchSettings.json" />
+    <Content Remove="Processors\SqsProcessor.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Modules\" />
     <Folder Include="WebSockets\" />
     <Folder Include="Connections\" />
+    <Folder Include="Processors\" />
+    <Folder Include="Handlers\" />
   </ItemGroup>
 </Project>
