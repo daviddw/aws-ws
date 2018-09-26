@@ -15,7 +15,8 @@ open Fake.IO.Globbing.Operators
 // Properties
 let projectName = "aws-service-test"
 
-let configuration = Environment.getBuildParamOrDefault "CONFIGURATION" ""
+let vcsRef = Environment.environVarOrDefault "VCSREF" ""
+let configuration = Environment.environVarOrDefault "CONFIGURATION" ""
 
 let baseDir = __SOURCE_DIRECTORY__
 let sourceDir = Path.combine baseDir "src"
@@ -62,7 +63,8 @@ Target.create "Publish" (fun _ ->
             OutputPath = Some(deployDir)
         }) solutionDir
 
-    ignore(Shell.Exec("docker", "build -f Dockerfile -t " + dockerImage + " .", sourceDir))
+    ignore(Shell.Exec("docker", "build -f Dockerfile -t " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION="
+	+ tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
 
     ignore(Shell.Exec("docker", "push " + dockerUser + "/" + projectName, sourceDir))
 )
