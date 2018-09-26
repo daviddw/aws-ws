@@ -32,7 +32,7 @@ let tag = Environment.environVarOrDefault "DOCKERTAG" "" |> fun s -> s.Replace('
 let dockerImage = dockerUser + "/" + projectName + ":" + tag
 
 let awsDir = Path.combine baseDir "aws"
-let sshKey = Environment.environVarOrDefault "AWSKEYNAMW" ""
+let sshKey = Environment.environVarOrDefault "AWSKEYNAME" ""
 let vpcId = Environment.environVarOrDefault "AWSVPCID" ""
 let subnets = Environment.environVarOrDefault "AWSSUBNETS" ""
 
