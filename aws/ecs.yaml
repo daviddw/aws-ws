@@ -23,6 +23,10 @@ Parameters:
     Type: String
     Description: Name of the task's Docker image
 
+  DockerTag:
+    Type: String
+    Description: Name of the task's Docker image version
+
 Resources:
 
 # service infrastructure
@@ -42,6 +46,8 @@ Resources:
           Environment:
             - Name: SQSENDPOINT
               Value: !Sub http://sqs.${AWS::Region}.amazonaws.com
+            - Name: DOCKERTAG
+              Value: !ref DockerTag
 
   awsWsService:
     Type: AWS::ECS::Service

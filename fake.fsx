@@ -70,11 +70,15 @@ Target.create "Publish" (fun _ ->
 )
 
 Target.create "Deploy" (fun _ ->
-    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + projectName + " --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName=" + sshKey + " VpcId=" + vpcId + " SubnetIds=" + subnets + " DockerImage=" + dockerImage, awsDir))
+    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + projectName + "-queue --template-file sqs.yaml", awsDir))
+
+    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + projectName + "-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName=" + sshKey + " VpcId=" + vpcId + " SubnetIds=" + subnets + " DockerImage=" + dockerImage + " DockerTag=" + tag, awsDir))
 )
 
 Target.create "DeleteStack" (fun _ ->
-    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + projectName, awsDir))
+    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + projectName + "-ecs", awsDir))
+
+    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + projectName + "-queue", awsDir))
 )
 
 open Fake.Core.TargetOperators
