@@ -78,7 +78,11 @@ Target.create "Deploy" (fun _ ->
 Target.create "DeleteStack" (fun _ ->
     ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + projectName + "-ecs", awsDir))
 
+    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ projectName + "-ecs", awsDir))
+
     ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + projectName + "-queue", awsDir))
+
+    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ projectName + "-queue", awsDir))
 )
 
 open Fake.Core.TargetOperators
