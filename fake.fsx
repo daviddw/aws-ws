@@ -31,6 +31,8 @@ let tag = Environment.environVarOrDefault "DOCKERTAG" "" |> fun s -> s.Replace('
 
 let dockerImage = dockerUser + "/" + projectName + ":" + tag
 
+let stackName = "aws-service-test"
+
 let awsDir = Path.combine baseDir "aws"
 let sshKey = Environment.environVarOrDefault "AWSKEYNAME" ""
 let vpcId = Environment.environVarOrDefault "AWSVPCID" ""
@@ -63,26 +65,34 @@ Target.create "Publish" (fun _ ->
             Configuration = DotNet.BuildConfiguration.Release;
             OutputPath = Some(deployDir)
         }) solutionDir
+)
 
+Target.create "PublishDocker" (fun _ ->
     ignore(Shell.Exec("docker", "build -f Dockerfile -t " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION=" + tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
+)
 
+Target.create "PushDocker" (fun _ ->
     ignore(Shell.Exec("docker", "push " + dockerUser + "/" + projectName, sourceDir))
 )
 
 Target.create "Deploy" (fun _ ->
-    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + projectName + "-queue --template-file sqs.yaml", awsDir))
+    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-lambda --template-file lambda.yaml", awsDir))
 
-    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + projectName + "-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName=" + sshKey + " VpcId=" + vpcId + " SubnetIds=" + subnets + " DockerImage=" + dockerImage + " DockerTag=" + tag, awsDir))
+    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-queue --template-file sqs.yaml", awsDir))
+
+    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName=" + sshKey + " VpcId=" + vpcId + " SubnetIds=" + subnets + " DockerImage=" + dockerImage + " DockerTag=" + tag, awsDir))
 )
 
 Target.create "DeleteStack" (fun _ ->
-    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + projectName + "-ecs", awsDir))
+    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-ecs", awsDir))
 
-    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ projectName + "-ecs", awsDir))
+    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-ecs", awsDir))
 
-    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + projectName + "-queue", awsDir))
+    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-queue", awsDir))
 
-    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ projectName + "-queue", awsDir))
+    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-queue", awsDir))
+
+    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-lambda", awsDir))
 )
 
 open Fake.Core.TargetOperators
@@ -91,6 +101,12 @@ open Fake.Core.TargetOperators
 "Clean"
     ==> "Build"
     ==> "Publish"
+
+"Publish"
+    ==> "PublishDocker"
+
+"PublishDocker"
+    ==> "PushDocker"
 
 // start build
 Target.runOrDefaultWithArguments "Build"
