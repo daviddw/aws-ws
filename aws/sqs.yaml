@@ -5,8 +5,6 @@ Resources:
 
   queue:
     Type: AWS::SQS::Queue
-    Properties:
-      QueueName: "aws-service-test-queue"
 
   topic:
     Type: AWS::SNS::Topic
@@ -38,3 +36,9 @@ Resources:
               ArnEquals:
                 aws:SourceArn: !Ref topic
 
+Outputs:
+  QueueName:
+    Description: SQS Stack's queue's name
+    Value: !Ref queue
+    Export:
+      Name: awsWsQueueName

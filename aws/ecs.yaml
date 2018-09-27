@@ -49,6 +49,8 @@ Resources:
               Value: !Sub http://sqs.${AWS::Region}.amazonaws.com
             - Name: DOCKERTAG
               Value: !Ref DockerTag
+            - Name: QUEUENAME
+              Value: !ImportValue awsWsQueueName
   
   awsWsTaskDefinitionRole:
     Type: AWS::IAM::Role

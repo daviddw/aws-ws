@@ -20,7 +20,6 @@ namespace aws_service_test
 {
     public class Startup
     {
-        private const string kQueueNamePrefix = "aws-service-test-queue";
         private const uint kWebSocketKeepAliveIntervale = 30;
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -47,14 +46,10 @@ namespace aws_service_test
 
                 var client = new AmazonSQSClient(config);
 
-                var request = new ListQueuesRequest();
-                request.QueueNamePrefix = kQueueNamePrefix;
-
-                var queues = client.ListQueuesAsync(request).Result;
-                var sqsUrl = queues.QueueUrls.FirstOrDefault();
-
                 var manager = app.ApplicationServices.GetService<IConnectionManager>();
                 var handler = new SqsMessageHandler(manager);
+
+                var sqsUrl = Environment.ExpandEnvironmentVariables("%QUEUENAME%");
 
                 processor = new SqsProcessor(client, sqsUrl, handler);
             });
