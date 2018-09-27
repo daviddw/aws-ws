@@ -13,11 +13,12 @@ ARG BUILDDATE
 
 LABEL org.label-schema.vendor="David Drysdale-Wilson" \
       org.label-schema.build-date=$BUILDDATE \
-	  org.label-schema.docker.dockerFile="Dockerfile" \
-	  org.label-schema.version=$VERSION \
-	  org.label-schema.vcs-ref=$VCSREF \
-	  org.label-schema.vcs=type="Git" \
-	  org.label-schema.vcs-url="https://github.com/daviddw/aws-ws" \
-	  org.label-schema.name="WebSocket Server backed by AWS"
+      org.label-schema.docker.dockerFile="Dockerfile" \
+      org.label-schema.version=$VERSION \
+      org.label-schema.vcs-ref=$VCSREF \
+      org.label-schema.vcs-type="git" \
+      org.label-schema.vcs-url="https://github.com/daviddw/aws-ws" \
+      org.label-schema.name="aws-service-test" \
+      org.label-schema.description="WebSocket Server backed by AWS"
 
 ENTRYPOINT ["/bin/bash", "launch.sh"] 
