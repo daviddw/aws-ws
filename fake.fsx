@@ -16,7 +16,8 @@ open Fake.IO.Globbing.Operators
 let projectName = "aws-service-test"
 
 let vcsRef = Environment.environVarOrDefault "VCSREF" ""
-let buildDate = Environment.environVarOrDefault "BUILDDATE" ""
+let vcsBranch = Environment.environVarOrDefault "VCSBRANCH" ""
+let buildDate = Environment.environVarOrDefault "BUILDDATE" DateTime.Now.ToString "yyyy-MM-ddTHH:mm:ssZ"
 let configuration = Environment.environVarOrDefault "CONFIGURATION" ""
 
 let baseDir = __SOURCE_DIRECTORY__
@@ -31,7 +32,7 @@ let lambdaBuildDir = Path.combine lambdaDir (Path.combine "bin" configuration) |
 let lambdaDeployDir = Path.combine lambdaDir (Path.combine "deploy" configuration) |> Path.GetFullPath
 
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
-let tag = Environment.environVarOrDefault "DOCKERTAG" "" |> fun s -> s.Replace('/', '-')
+let tag = vcsRef + vcsBranch |> fun s -> s.Replace('/', '-')
 
 let dockerImage = dockerUser + "/" + projectName + ":" + tag
 
@@ -92,11 +93,11 @@ Target.create "PublishDocker" (fun _ ->
     ignore(Shell.Exec("docker", "build -f Dockerfile -t " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION=" + tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
 )
 
-Target.create "PushDocker" (fun _ ->
+Target.create "Deploy" (fun _ ->
     ignore(Shell.Exec("docker", "push " + dockerUser + "/" + projectName, sourceDir))
 )
 
-Target.create "Deploy" (fun _ ->
+Target.create "StartStacks" (fun _ ->
     ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-lambda --template-file lambda.yaml", awsDir))
 
     ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-queue --template-file sqs.yaml", awsDir))
@@ -104,7 +105,7 @@ Target.create "Deploy" (fun _ ->
     ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName=" + sshKey + " VpcId=" + vpcId + " SubnetIds=" + subnets + " DockerImage=" + dockerImage + " DockerTag=" + tag, awsDir))
 )
 
-Target.create "DeleteStack" (fun _ ->
+Target.create "DeleteStacks" (fun _ ->
     ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-ecs", awsDir))
 
     ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-ecs", awsDir))
