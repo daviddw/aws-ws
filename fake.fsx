@@ -21,10 +21,14 @@ let configuration = Environment.environVarOrDefault "CONFIGURATION" ""
 
 let baseDir = __SOURCE_DIRECTORY__
 let sourceDir = Path.combine baseDir "src"
-let solutionDir = sourceDir
-let projectDir = Path.combine sourceDir projectName |> Path.GetFullPath
-let buildDir = Path.combine projectDir (Path.combine "bin" configuration) |> Path.GetFullPath
-let deployDir = Path.combine projectDir (Path.combine "deploy" configuration) |> Path.GetFullPath
+
+let serviceDir = Path.combine sourceDir "aws-service-test"
+let serviceBuildDir = Path.combine serviceDir (Path.combine "bin" configuration) |> Path.GetFullPath
+let serviceDeployDir = Path.combine serviceDir (Path.combine "deploy" configuration) |> Path.GetFullPath
+
+let lambdaDir = Path.combine sourceDir "aws-lambda-test"
+let lambdaBuildDir = Path.combine lambdaDir (Path.combine "bin" configuration) |> Path.GetFullPath
+let lambdaDeployDir = Path.combine lambdaDir (Path.combine "deploy" configuration) |> Path.GetFullPath
 
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
 let tag = Environment.environVarOrDefault "DOCKERTAG" "" |> fun s -> s.Replace('/', '-')
@@ -42,17 +46,24 @@ let subnets = Environment.environVarOrDefault "AWSSUBNETS" ""
 // Targets
 Target.create "Clean" (fun _ ->
     Shell.cleanDirs
-        [ deployDir
-          buildDir
-          deployDir ]
+        [ serviceBuildDir
+          serviceDeployDir
+          lambdaBuildDir
+          lambdaDeployDir ]
 )
 
 Target.create "Build" (fun _ ->
     DotNet.build (fun c ->
         { c with
             Configuration = DotNet.BuildConfiguration.Custom(configuration)
-            OutputPath = Some(buildDir)
-        }) solutionDir
+            OutputPath = Some(serviceBuildDir)
+        }) serviceDir
+
+    DotNet.build (fun c ->
+        { c with
+            Configuration = DotNet.BuildConfiguration.Custom(configuration)
+            OutputPath = Some(lambdaBuildDir)
+        }) lambdaDir
 )
 
 Target.create "Publish" (fun _ ->
@@ -63,8 +74,18 @@ Target.create "Publish" (fun _ ->
                     CustomParams = Some("/property:PublishWithAspNetCoreTargetManifest=false")
                 })
             Configuration = DotNet.BuildConfiguration.Release;
-            OutputPath = Some(deployDir)
-        }) solutionDir
+            OutputPath = Some(serviceDeployDir)
+        }) serviceDir
+
+    DotNet.publish (fun c ->
+        { c with
+            Common = DotNet.Options.Create() |> (fun c ->
+                { c with
+                    CustomParams = Some("/property:PublishWithAspNetCoreTargetManifest=false")
+                })
+            Configuration = DotNet.BuildConfiguration.Release;
+            OutputPath = Some(lambdaDeployDir)
+        }) lambdaDir
 )
 
 Target.create "PublishDocker" (fun _ ->
@@ -109,4 +130,4 @@ open Fake.Core.TargetOperators
     ==> "PushDocker"
 
 // start build
-Target.runOrDefaultWithArguments "Build"
+Target.runOrDefaultWithArguments "PublishDocker"
