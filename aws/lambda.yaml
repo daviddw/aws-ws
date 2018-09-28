@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack that creates a Lambda function
+
+Resources:
+
+  awsLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt awsLambdaExecutionRole.Arn
+      Runtime: dotnetcore2.1
+      Handler: aws-lambda-test::aws_lambda_test.Function::FunctionHandler
+      Code:
+        S3Bucket: aws-lambda-test-1
+        S3Key: aws-lambda-test.zip
+
+  awsLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - ec2:DescribeImages
+            Resource: "*"
