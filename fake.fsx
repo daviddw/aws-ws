@@ -17,7 +17,7 @@ let projectName = "aws-service-test"
 
 let vcsRef = Environment.environVarOrDefault "VCSREF" ""
 let vcsBranch = Environment.environVarOrDefault "VCSBRANCH" ""
-let buildDate = Environment.environVarOrDefault "BUILDDATE" DateTime.Now.ToString "yyyy-MM-ddTHH:mm:ssZ"
+let buildDate = Environment.environVarOrDefault "BUILDDATE" (DateTime.Now.ToString "yyyy-MM-ddTHH:mm:ssZ")
 let configuration = Environment.environVarOrDefault "CONFIGURATION" ""
 
 let baseDir = __SOURCE_DIRECTORY__
@@ -128,7 +128,7 @@ open Fake.Core.TargetOperators
     ==> "PublishDocker"
 
 "PublishDocker"
-    ==> "PushDocker"
+    ==> "Deploy"
 
 // start build
 Target.runOrDefaultWithArguments "PublishDocker"
