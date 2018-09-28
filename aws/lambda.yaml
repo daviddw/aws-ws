@@ -1,44 +1,21 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
 Description: Stack that creates a Lambda function
 
 Resources:
 
-  awsLambdaFunction:
-    Type: AWS::Lambda::Function
+  getFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      Role: !GetAtt awsLambdaExecutionRole.Arn
       Runtime: dotnetcore2.1
       Handler: aws-lambda-test::aws_lambda_test.Function::FunctionHandler
-      Code:
-        S3Bucket: aws-lambda-test-1
-        S3Key: aws-lambda-test.zip
+      CodeUri: s3://aws-lambda-test-1/aws-lambda-test.zip
       Environment:
-        - Name: QUEUENAME
-          Value: !ImportValue awsWsQueueName
-
-  awsLambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
-      Path: "/"
-      Policies:
-      - PolicyName: root
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:PutLogEvents
-            Resource: arn:aws:logs:*:*:*
-          - Effect: Allow
-            Action:
-            - ec2:DescribeImages
-            Resource: "*"
+        Variables:
+          QUEUENAME: !ImportValue awsWsQueueName
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /appveyor
+            Method: GET
