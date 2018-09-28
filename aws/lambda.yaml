@@ -12,6 +12,9 @@ Resources:
       Code:
         S3Bucket: aws-lambda-test-1
         S3Key: aws-lambda-test.zip
+      Environment:
+        - Name: QUEUENAME
+          Value: !ImportValue awsWsQueueName
 
   awsLambdaExecutionRole:
     Type: AWS::IAM::Role
