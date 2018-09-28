@@ -12,12 +12,14 @@ open Fake.IO
 open Fake.DotNet
 open Fake.IO.Globbing.Operators
 
+let date = DateTime.Now.ToString "yyyy-MM-ddTHH:mm:ssZ"
+
 // Properties
 let projectName = "aws-service-test"
 
 let vcsRef = Environment.environVarOrDefault "VCSREF" ""
 let vcsBranch = Environment.environVarOrDefault "VCSBRANCH" ""
-let buildDate = Environment.environVarOrDefault "BUILDDATE" (DateTime.Now.ToString "yyyy-MM-ddTHH:mm:ssZ")
+let buildDate = Environment.environVarOrDefault "BUILDDATE" date
 let configuration = Environment.environVarOrDefault "CONFIGURATION" ""
 
 let baseDir = __SOURCE_DIRECTORY__
@@ -32,7 +34,7 @@ let lambdaBuildDir = Path.combine lambdaDir (Path.combine "bin" configuration) |
 let lambdaDeployDir = Path.combine lambdaDir (Path.combine "deploy" configuration) |> Path.GetFullPath
 
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
-let tag = vcsRef + vcsBranch |> fun s -> s.Replace('/', '-')
+let tag = vcsRef + "-" + vcsBranch |> fun s -> s.Replace('/', '-')
 
 let dockerImage = dockerUser + "/" + projectName + ":" + tag
 
