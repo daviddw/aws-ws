@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Stack that creates a Lambda function
+
+Parameters:
+
+  BucketName:
+    Type: String
+    Description: Name of the s3 bucket
+
+  LambdaPackage:
+    Type: String
+    Description: Name of the lambda package
+
+Resources:
+
+  getFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: dotnetcore2.1
+      Handler: aws-lambda-test::aws_lambda_test.Function::FunctionHandler
+      CodeUri: 
+        Bucket: !Ref BucketName
+        Key: !Ref LambdaPackage
+      Policies: !Ref awsLambdaPolicy
+      Timeout: 30
+      Environment:
+        Variables:
+          SNSENDPOINT: !Sub http://sns.${AWS::Region}.amazonaws.com
+          TOPICARN: !ImportValue awsWsTopicArn
+      Events:
+        postToLambda:
+          Type: Api
+          Properties:
+            Path: /appveyor
+            Method: POST
+
+  awsLambdaPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - sns:Publish
+            Resource: "*"
