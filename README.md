@@ -21,7 +21,7 @@ The following environment variables are required for the service to run,
 
 Builds the WebSocket service
 
-`./build.sh -t Deploy`
+`./build.sh -t PushDocker`
 
 Builds the service's Docker image and pushes to DockerHub
 
