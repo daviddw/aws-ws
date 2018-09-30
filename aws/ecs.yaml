@@ -2,6 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Stack that creates an Application Load Balancer, Load Balancer Listener, ECS cluster, ECS Service and ECS task
 
 Parameters:
+  
   ECSAMI:
     Description: AMI ID - Ensures we use the latest amazon-linux image
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
