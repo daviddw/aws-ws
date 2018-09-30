@@ -29,6 +29,6 @@ Builds the service's Docker image and pushes to DockerHub
 
 Deploys the SNS/SQS and the ECS stacks to AWS
 
-`./build.sh -t DeleteStacks`
+`./build.sh -t StopStacks`
 
 Deletes the SNS/SQS and the ECS stacks from AWS
