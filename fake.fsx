@@ -1,5 +1,6 @@
 #r "paket:
 nuget Fake.IO.FileSystem
+nuget Fake.IO.Zip
 nuget Fake.DotNet.Cli
 nuget Fake.Core.Process
 nuget Fake.Core.Target //"
@@ -32,11 +33,15 @@ let serviceDeployDir = Path.combine serviceDir (Path.combine "deploy" configurat
 let lambdaDir = Path.combine sourceDir "aws-lambda-test"
 let lambdaBuildDir = Path.combine lambdaDir (Path.combine "bin" configuration) |> Path.GetFullPath
 let lambdaDeployDir = Path.combine lambdaDir (Path.combine "deploy" configuration) |> Path.GetFullPath
+let lambdaPackageDir = Path.combine lambdaDir "deploy" |> Path.GetFullPath
+let lambdaPackageFilename = "aws-lambda-test.zip"
 
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
 let tag = vcsRef + "-" + vcsBranch |> fun s -> s.Replace('/', '-')
 
 let dockerImage = dockerUser + "/" + projectName + ":" + tag
+
+let bucketName = Environment.environVarOrDefault "S3BUCKET" ""
 
 let stackName = "aws-service-test"
 
@@ -89,34 +94,41 @@ Target.create "Publish" (fun _ ->
             Configuration = DotNet.BuildConfiguration.Release;
             OutputPath = Some(lambdaDeployDir)
         }) lambdaDir
-)
 
-Target.create "PublishDocker" (fun _ ->
+    let files = Directory.EnumerateFiles(lambdaDeployDir)
+    Fake.IO.Zip.zip lambdaDeployDir (lambdaPackageDir + "/" + lambdaPackageFilename) files
+
     ignore(Shell.Exec("docker", "build -f Dockerfile -t " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION=" + tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
 )
 
-Target.create "Deploy" (fun _ ->
+Target.create "PushLambda" (fun _ ->
+    ignore(Shell.Exec("aws", "s3 cp " + lambdaPackageFilename + " s3://" + bucketName, lambdaPackageDir))
+)
+
+Target.create "PushDocker" (fun _ ->
     ignore(Shell.Exec("docker", "push " + dockerUser + "/" + projectName, sourceDir))
 )
 
 Target.create "StartStacks" (fun _ ->
-    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-lambda --template-file lambda.yaml", awsDir))
-
     ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-queue --template-file sqs.yaml", awsDir))
+
+    ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-lambda --template-file lambda.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName=" + bucketName + " LambdaPackage=" + lambdaPackageFilename, awsDir))
 
     ignore(Shell.Exec("aws", "cloudformation deploy --stack-name " + stackName + "-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName=" + sshKey + " VpcId=" + vpcId + " SubnetIds=" + subnets + " DockerImage=" + dockerImage + " DockerTag=" + tag, awsDir))
 )
 
-Target.create "DeleteStacks" (fun _ ->
-    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-ecs", awsDir))
+Target.create "StopStacks" (fun _ ->
+    //ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-ecs", awsDir))
 
-    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-ecs", awsDir))
+    //ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-ecs", awsDir))
+
+    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-lambda", awsDir))
+
+    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-lambda", awsDir))
 
     ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-queue", awsDir))
 
     ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-queue", awsDir))
-
-    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-lambda", awsDir))
 )
 
 open Fake.Core.TargetOperators
@@ -127,10 +139,8 @@ open Fake.Core.TargetOperators
     ==> "Publish"
 
 "Publish"
-    ==> "PublishDocker"
-
-"PublishDocker"
-    ==> "Deploy"
+    ==> "PushLambda"
+    ==> "PushDocker"
 
 // start build
-Target.runOrDefaultWithArguments "PublishDocker"
+Target.runOrDefaultWithArguments "PushDocker"
