@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Net;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
-using Amazon.SQS;
-using Amazon.SQS.Model;
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleNotificationService.Model;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
@@ -17,22 +17,22 @@ namespace aws_lambda_test
         {
             context.Logger.LogLine(">FunctionHandler\n");
 
-            var config = new AmazonSQSConfig();
-            config.ServiceURL = Environment.ExpandEnvironmentVariables("%SQSENDPOINT%");
+            var config = new AmazonSimpleNotificationServiceConfig();
+            config.ServiceURL = Environment.ExpandEnvironmentVariables("%SNSENDPOINT%");
 
-            var client = new AmazonSQSClient(config);
+            var client = new AmazonSimpleNotificationServiceClient(config);
 
-            context.Logger.LogLine("AmazonSQSClient created\n");
+            context.Logger.LogLine("AmazonSNSClient created\n");
 
-            var request = new SendMessageRequest
+            var request = new PublishRequest
             {
-                QueueUrl = Environment.ExpandEnvironmentVariables("%QUEUENAME%"),
-                MessageBody = input.Body,
+                TopicArn = Environment.ExpandEnvironmentVariables("%TOPICARN%"),
+                Message = input.Body,
             };
 
-            client.SendMessageAsync(request).Wait();
+            client.PublishAsync(request).Wait();
 
-            context.Logger.LogLine("SendMessageAsync completed\n");
+            context.Logger.LogLine("PublishAsync completed\n");
 
             var response = new APIGatewayProxyResponse
             {

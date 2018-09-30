@@ -26,8 +26,8 @@ Resources:
       Timeout: 30
       Environment:
         Variables:
-          SQSENDPOINT: !Sub http://sqs.${AWS::Region}.amazonaws.com
-          QUEUENAME: !ImportValue awsWsQueueName
+          SNSENDPOINT: !Sub http://sns.${AWS::Region}.amazonaws.com
+          TOPICARN: !ImportValue awsWsTopicArn
       Events:
         postToLambda:
           Type: Api
@@ -46,5 +46,5 @@ Resources:
               - logs:CreateLogGroup
               - logs:CreateLogStream
               - logs:PutLogEvents
-              - sqs:SendMessage
+              - sns:Publish
             Resource: "*"
