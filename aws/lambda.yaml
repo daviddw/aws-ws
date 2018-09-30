@@ -2,6 +2,16 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Stack that creates a Lambda function
 
+Parameters:
+
+  BucketName:
+    Type: String
+    Description: Name of the s3 bucket
+
+  LambdaPackage:
+    Type: String
+    Description: Name of the lambda package
+
 Resources:
 
   getFunction:
@@ -9,13 +19,32 @@ Resources:
     Properties:
       Runtime: dotnetcore2.1
       Handler: aws-lambda-test::aws_lambda_test.Function::FunctionHandler
-      CodeUri: s3://aws-lambda-test-1/aws-lambda-test.zip
+      CodeUri: 
+        Bucket: !Ref BucketName
+        Key: !Ref LambdaPackage
+      Policies: !Ref awsLambdaPolicy
+      Timeout: 30
       Environment:
         Variables:
+          SQSENDPOINT: !Sub http://sqs.${AWS::Region}.amazonaws.com
           QUEUENAME: !ImportValue awsWsQueueName
       Events:
-        GetResource:
+        postToLambda:
           Type: Api
           Properties:
             Path: /appveyor
-            Method: GET
+            Method: POST
+
+  awsLambdaPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - sqs:SendMessage
+            Resource: "*"
