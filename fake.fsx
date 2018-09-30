@@ -118,9 +118,9 @@ Target.create "StartStacks" (fun _ ->
 )
 
 Target.create "StopStacks" (fun _ ->
-    //ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-ecs", awsDir))
+    ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-ecs", awsDir))
 
-    //ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-ecs", awsDir))
+    ignore(Shell.Exec("aws", "cloudformation wait stack-delete-complete --stack-name "+ stackName + "-ecs", awsDir))
 
     ignore(Shell.Exec("aws", "cloudformation delete-stack --stack-name " + stackName + "-lambda", awsDir))
 
