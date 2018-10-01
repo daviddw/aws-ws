@@ -39,7 +39,12 @@ let lambdaPackageFilename = "aws-lambda-test.zip"
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
 let tag = vcsRef + "-" + vcsBranch |> fun s -> s.Replace('/', '-')
 
-let dockerImage = dockerUser + "/" + projectName + ":" + tag
+let dockerImageBranch = "-t " + dockerUser + "/" + projectName + ":" + tag
+let dockerImageLatest = "-t " + dockerUser + "/" + projectName + ":latest"
+let dockerImage =
+    match vcsBranch with
+    | "master" -> dockerImageBranch + " " + dockerImageLatest
+    | _ -> dockerImageBranch
 
 let bucketName = Environment.environVarOrDefault "S3BUCKET" ""
 
@@ -98,7 +103,7 @@ Target.create "Publish" (fun _ ->
     let files = Directory.EnumerateFiles(lambdaDeployDir)
     Fake.IO.Zip.zip lambdaDeployDir (lambdaPackageDir + "/" + lambdaPackageFilename) files
 
-    ignore(Shell.Exec("docker", "build -f Dockerfile -t " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION=" + tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
+    ignore(Shell.Exec("docker", "build -f Dockerfile " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION=" + tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
 )
 
 Target.create "PushLambda" (fun _ ->
