@@ -23,6 +23,8 @@ let vcsBranch = Environment.environVarOrDefault "VCSBRANCH" ""
 let buildDate = Environment.environVarOrDefault "BUILDDATE" date
 let configuration = Environment.environVarOrDefault "CONFIGURATION" ""
 
+let tag = vcsRef + "-" + vcsBranch |> fun s -> s.Replace('/', '-')
+
 let baseDir = __SOURCE_DIRECTORY__
 let sourceDir = Path.combine baseDir "src"
 
@@ -34,10 +36,9 @@ let lambdaDir = Path.combine sourceDir "aws-lambda-test"
 let lambdaBuildDir = Path.combine lambdaDir (Path.combine "bin" configuration) |> Path.GetFullPath
 let lambdaDeployDir = Path.combine lambdaDir (Path.combine "deploy" configuration) |> Path.GetFullPath
 let lambdaPackageDir = Path.combine lambdaDir "deploy" |> Path.GetFullPath
-let lambdaPackageFilename = "aws-lambda-test.zip"
+let lambdaPackageFilename = "aws-lambda-test" + tag + ".zip"
 
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
-let tag = vcsRef + "-" + vcsBranch |> fun s -> s.Replace('/', '-')
 
 let dockerImageBranch = "-t " + dockerUser + "/" + projectName + ":" + tag
 let dockerImageLatest = "-t " + dockerUser + "/" + projectName + ":latest"
