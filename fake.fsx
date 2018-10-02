@@ -36,7 +36,7 @@ let lambdaDir = Path.combine sourceDir "aws-lambda-test"
 let lambdaBuildDir = Path.combine lambdaDir (Path.combine "bin" configuration) |> Path.GetFullPath
 let lambdaDeployDir = Path.combine lambdaDir (Path.combine "deploy" configuration) |> Path.GetFullPath
 let lambdaPackageDir = Path.combine lambdaDir "deploy" |> Path.GetFullPath
-let lambdaPackageFilename = "aws-lambda-test" + tag + ".zip"
+let lambdaPackageFilename = "aws-lambda-test-" + tag + ".zip"
 
 let dockerUser = Environment.environVarOrDefault "DOCKERUSER" ""
 
@@ -101,9 +101,8 @@ Target.create "Publish" (fun _ ->
             OutputPath = Some(lambdaDeployDir)
         }) lambdaDir
 
-    let files = Directory.EnumerateFiles(lambdaDeployDir)
-    Fake.IO.Zip.zip lambdaDeployDir (lambdaPackageDir + "/" + lambdaPackageFilename) files
-
+    ignore(Shell.Exec("zip", "-r " + (lambdaPackageDir + "/" + lambdaPackageFilename) + " . -i *", lambdaDeployDir))
+    
     ignore(Shell.Exec("docker", "build -f Dockerfile " + dockerImage + " --build-arg VCSREF=" + vcsRef + " --build-arg VERSION=" + tag + " --build-arg BUILDDATE=" + buildDate + " .", sourceDir))
 )
 
