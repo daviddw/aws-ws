@@ -105,13 +105,9 @@ Task("Publish-Docker")
 Task("Deploy-Docker")
   .IsDependentOn("Publish-Docker")
   .Does(() => {
-      if (isMasterBranch) {
-        DockerPush(dockerImageBranchTag);
-        Console.WriteLine($"Published {dockerImageBranchTag}");
-      }
-      else {
-        Console.WriteLine($"Only push to Docker from CI");
-      }
+    DockerPush(dockerImageBranchTag);
+
+    Console.WriteLine($"Published {dockerImageBranchTag}");
   });
 
 Task("Deploy-Lambda")
@@ -150,7 +146,7 @@ Task("Deploy-Stack")
       }
 
       result = RunCommand(Context, "aws", new ProcessSettings {
-          Arguments = $"cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageTags} DockerTag={tag}",
+          Arguments = $"cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageBranchTag} DockerTag={tag}",
           WorkingDirectory = new DirectoryPath("./aws/")
       });
 
@@ -169,7 +165,7 @@ Task("Deploy-Stack")
     }
     else
     {
-        Console.WriteLine($"aws cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageTags} DockerTag={tag}");
+        Console.WriteLine($"aws cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageBranchTag} DockerTag={tag}");
     }
   });
 
