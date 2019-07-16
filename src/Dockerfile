@@ -4,8 +4,8 @@ EXPOSE 3000
 
 WORKDIR /app
 
-COPY aws-service-test/deploy/Release .
-COPY launch.sh .
+COPY src/aws-service-test/bin/Release/netcoreapp2.1/publish/ .
+COPY src/launch.sh .
 
 ARG VCSREF
 ARG VERSION

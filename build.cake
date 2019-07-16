@@ -40,25 +40,24 @@ Task("Default")
 
 Task("Clean")
   .Does(() => {
-    if (DirectoryExists("./src/aws-lambda-test/bin"))
-    {
-      DeleteDirectory("./src/aws-lambda-test/bin", new DeleteDirectorySettings {
-        Recursive = true
-      });
-    }
-    
-    if (DirectoryExists("./src/aws-lambda-test/obj"))
-    {
-      DeleteDirectory("./src/aws-lambda-test/obj", new DeleteDirectorySettings {
-        Recursive = true
-      });
-    }
+    var dirs = new string[] { "aws-service-test", "aws-lambda-test" };
 
-    if (DirectoryExists("./deploy"))
+    foreach(var dir in dirs)
     {
-      DeleteDirectory("./deploy", new DeleteDirectorySettings {
-        Recursive = true
-      });
+        if (DirectoryExists($"./src/{dir}/bin"))
+        {
+            DeleteDirectory($"./src/{dir}/bin", new DeleteDirectorySettings { Recursive = true});
+        }
+        
+        if (DirectoryExists($"./src/{dir}/obj"))
+        {
+            DeleteDirectory($"./src/{dir}/obj", new DeleteDirectorySettings { Recursive = true});
+        }
+
+        if (DirectoryExists($"./src/{dir}/deploy"))
+        {
+            DeleteDirectory($"./src/{dir}/deploy", new DeleteDirectorySettings { Recursive = true});
+        }
     }
   });
 
@@ -83,10 +82,11 @@ Task("Publish-Service")
   });
 
 Task("Publish-Lambda")
+  .IsDependentOn("Publish-Service")
   .Does(() => {
-    CreateDirectory("deploy");
+    CreateDirectory("./src/aws-lambda-test/deploy");
 
-    Zip("./src/aws-lambda-test/bin/Release/netcoreapp2.1/publish", $"./deploy/{lambdaFilename}");
+    Zip("./src/aws-lambda-test/bin/Release/netcoreapp2.1/publish", $"./src/aws-lambda-test/deploy/{lambdaFilename}");
   });
 
 Task("Publish-Docker")
@@ -117,7 +117,7 @@ Task("Deploy-Docker")
 Task("Deploy-Lambda")
   .IsDependentOn("Publish-Lambda")
   .Does(async () => {
-    await S3Upload($"./deploy/{lambdaFilename}", $"{lambdaFilename}",
+    await S3Upload($"./src/aws-lambda-test/deploy/{lambdaFilename}", $"{lambdaFilename}",
       new UploadSettings()
         .SetAccessKey(accessKey)
         .SetSecretKey(secretKey)
