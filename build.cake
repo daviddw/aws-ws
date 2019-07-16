@@ -8,7 +8,7 @@ var stackName = "aws-service-test";
 var vcsRef = EnvironmentVariable("VCSREF") ?? "";
 var vcsBranch = EnvironmentVariable("VCSBRANCH") ?? "";
 
-var tag = $"-{vcsRef}-{vcsBranch}".Replace('/', '-');
+var tag = $"{vcsRef}-{vcsBranch}".Replace('/', '-');
 
 var isMasterBranch = vcsBranch == "master";
 
