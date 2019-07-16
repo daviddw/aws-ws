@@ -150,12 +150,12 @@ Task("Deploy-Stack")
       }
 
       result = RunCommand(Context, "aws", new ProcessSettings {
-          Arguments = $"cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnetIds} DockerImage={dockerImage} DockerTag={tag}",
+          Arguments = $"cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageTags} DockerTag={tag}",
           WorkingDirectory = new DirectoryPath("./aws/")
       });
 
       if (result != 0) {
-        throw new Exception("aws cloudformation deploy failed.");
+          throw new Exception("aws cloudformation deploy failed.");
       }
 
       result = RunCommand(Context, "aws", new ProcessSettings {
@@ -164,12 +164,12 @@ Task("Deploy-Stack")
       });
 
       if (result != 0) {
-        throw new Exception("aws cloudformation describe-stacks failed.");
+          throw new Exception("aws cloudformation describe-stacks failed.");
       }
     }
     else
     {
-      Console.WriteLine($"aws cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnetIds} DockerImage={dockerImage} DockerTag={tag}");
+        Console.WriteLine($"aws cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageTags} DockerTag={tag}");
     }
   });
 
