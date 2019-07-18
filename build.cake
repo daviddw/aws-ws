@@ -34,6 +34,13 @@ var lambdaFilename = $"aws-lambda-test-{tag}.zip";
 
 var target = Argument("target", "Default");
 
+var profile = Argument("Profile", "");
+
+if(!string.IsNullOrEmpty(profile))
+{
+    profile = $"--profile {profile} ";
+}
+
 Task("Default")
   .IsDependentOn("Clean")
   .IsDependentOn("Deploy");
@@ -128,44 +135,44 @@ Task("Deploy-Stack")
     if (string.IsNullOrWhiteSpace(vcsBranch) || isMasterBranch)
     {
       var result = RunCommand(Context, "aws", new ProcessSettings {
-          Arguments = $"cloudformation deploy --stack-name {stackName}-queue --template-file sqs.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}",
+          Arguments = $"{profile}cloudformation deploy --stack-name {stackName}-queue --template-file sqs.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}",
           WorkingDirectory = new DirectoryPath("./aws/")
       });
 
       if (result != 0) {
-        throw new Exception("aws cloudformation deploy failed.");
+        throw new Exception($"aws {profile}cloudformation deploy failed.");
       }
 
       result = RunCommand(Context, "aws", new ProcessSettings {
-          Arguments = $"cloudformation deploy --stack-name {stackName}-lambda --template-file lambda.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}",
+          Arguments = $"{profile}cloudformation deploy --stack-name {stackName}-lambda --template-file lambda.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}",
           WorkingDirectory = new DirectoryPath("./aws/")
       });
 
       if (result != 0) {
-        throw new Exception("aws cloudformation deploy failed.");
+        throw new Exception($"aws {profile}cloudformation deploy failed.");
       }
 
       result = RunCommand(Context, "aws", new ProcessSettings {
-          Arguments = $"cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageBranchTag} DockerTag={tag}",
+          Arguments = $"{profile}cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageBranchTag} DockerTag={tag}",
           WorkingDirectory = new DirectoryPath("./aws/")
       });
 
       if (result != 0) {
-          throw new Exception("aws cloudformation deploy failed.");
+          throw new Exception($"aws {profile}cloudformation deploy failed.");
       }
 
       result = RunCommand(Context, "aws", new ProcessSettings {
-          Arguments = $"cloudformation describe-stacks --stack-name aws-service-test-ecs --query 'Stacks[0].Outputs[0].OutputValue'",
+          Arguments = $"{profile}cloudformation describe-stacks --stack-name aws-service-test-ecs --query 'Stacks[0].Outputs[0].OutputValue'",
           WorkingDirectory = new DirectoryPath("./aws/")
       });
 
       if (result != 0) {
-          throw new Exception("aws cloudformation describe-stacks failed.");
+          throw new Exception($"aws {profile}cloudformation describe-stacks failed.");
       }
     }
     else
     {
-        Console.WriteLine($"aws cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageBranchTag} DockerTag={tag}");
+        Console.WriteLine($"aws {profile}cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageBranchTag} DockerTag={tag}");
     }
   });
 
@@ -178,11 +185,11 @@ Task("Deploy")
 
 Task("Recall")
   .Does(() => {
-      WaitStackDelete(Context, $"{stackName}-ecs");
+      WaitStackDelete(Context, $"{stackName}-ecs", profile);
       Console.WriteLine($"Deleted stack {stackName}-ecs");
-      WaitStackDelete(Context, $"{stackName}-lambda");
+      WaitStackDelete(Context, $"{stackName}-lambda", profile);
       Console.WriteLine($"Deleted stack {stackName}-lambda");
-      WaitStackDelete(Context, $"{stackName}-queue");
+      WaitStackDelete(Context, $"{stackName}-queue", profile);
       Console.WriteLine($"Deleted stack {stackName}-queue");
   });
 
@@ -200,9 +207,9 @@ public static int RunCommand(ICakeContext context, string command, ProcessSettin
   }
 }
 
-public static void WaitStackDelete(ICakeContext context, string stack) {
+public static void WaitStackDelete(ICakeContext context, string stack, string profile) {
   var result = RunCommand(context, "aws", new ProcessSettings {
-    Arguments = $"cloudformation delete-stack --stack-name {stack}",
+    Arguments = $"{profile}cloudformation delete-stack --stack-name {stack}",
     WorkingDirectory = new DirectoryPath("./aws/")
   });
 
@@ -211,7 +218,7 @@ public static void WaitStackDelete(ICakeContext context, string stack) {
   }
 
   result = RunCommand(context, "aws", new ProcessSettings {
-    Arguments = $"cloudformation wait stack-delete-complete --stack-name {stack}",
+    Arguments = $"{profile}cloudformation wait stack-delete-complete --stack-name {stack}",
     WorkingDirectory = new DirectoryPath("./aws/")
   });
 
