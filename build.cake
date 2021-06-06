@@ -162,7 +162,7 @@ Task("Deploy-Stack")
       }
 
       result = RunCommand(Context, "aws", new ProcessSettings {
-          Arguments = $"{profile}cloudformation describe-stacks --stack-name a{stackName}-ecs --query 'Stacks[0].Outputs[0].OutputValue'",
+          Arguments = $"{profile}cloudformation describe-stacks --stack-name {stackName}-ecs --query 'Stacks[0].Outputs[0].OutputValue'",
           WorkingDirectory = new DirectoryPath("./aws/")
       });
 
@@ -175,7 +175,7 @@ Task("Deploy-Stack")
         Console.WriteLine($"aws {profile}cloudformation deploy --stack-name {stackName}-queue --template-file sqs.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}");
         Console.WriteLine($"aws {profile}cloudformation deploy --stack-name {stackName}-lambda --template-file lambda.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}");
         Console.WriteLine($"aws {profile}cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageBranchTag} DockerTag={tag}");
-        Console.WriteLine($"aws {profile}cloudformation describe-stacks --stack-name a{stackName}-ecs --query 'Stacks[0].Outputs[0].OutputValue'");
+        Console.WriteLine($"aws {profile}cloudformation describe-stacks --stack-name {stackName}-ecs --query 'Stacks[0].Outputs[0].OutputValue'");
     }
   });
 
