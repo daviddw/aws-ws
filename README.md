@@ -19,16 +19,12 @@ The following environment variables are required for the service to run,
 
 `./build.sh -t Build`
 
-Builds the WebSocket service
+Builds the WebSocket service and Lambda function
 
-`./build.sh -t PushDocker`
+`./build.sh -t Deploy`
 
-Builds the service's Docker image and pushes to DockerHub
+Builds and deploys the service's Docker image, Lambda function and stacks
 
-`./build.sh -t StartStacks`
+`./build.sh -t Recall`
 
-Deploys the SNS/SQS and the ECS stacks to AWS
-
-`./build.sh -t StopStacks`
-
-Deletes the SNS/SQS and the ECS stacks from AWS
+Deletes the stacks

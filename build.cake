@@ -1,5 +1,5 @@
-#addin Cake.AWS.S3&version=0.6.8
-#addin Cake.Docker&version=0.10.0
+#addin Cake.AWS.S3&version=1.0.0&loaddependencies=true
+#addin Cake.Docker&version=1.0.0
 
 var date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
@@ -162,7 +162,7 @@ Task("Deploy-Stack")
       }
 
       result = RunCommand(Context, "aws", new ProcessSettings {
-          Arguments = $"{profile}cloudformation describe-stacks --stack-name aws-service-test-ecs --query 'Stacks[0].Outputs[0].OutputValue'",
+          Arguments = $"{profile}cloudformation describe-stacks --stack-name a{stackName}-ecs --query 'Stacks[0].Outputs[0].OutputValue'",
           WorkingDirectory = new DirectoryPath("./aws/")
       });
 
@@ -172,7 +172,10 @@ Task("Deploy-Stack")
     }
     else
     {
+        Console.WriteLine($"aws {profile}cloudformation deploy --stack-name {stackName}-queue --template-file sqs.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}");
+        Console.WriteLine($"aws {profile}cloudformation deploy --stack-name {stackName}-lambda --template-file lambda.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}");
         Console.WriteLine($"aws {profile}cloudformation deploy --stack-name {stackName}-ecs --template-file ecs.yaml --capabilities CAPABILITY_IAM --parameter-overrides KeyName={sshKey} VpcId={vpcId} SubnetIds={subnets} DockerImage={dockerImageBranchTag} DockerTag={tag}");
+        Console.WriteLine($"aws {profile}cloudformation describe-stacks --stack-name a{stackName}-ecs --query 'Stacks[0].Outputs[0].OutputValue'");
     }
   });
 
@@ -191,6 +194,43 @@ Task("Recall")
       Console.WriteLine($"Deleted stack {stackName}-lambda");
       WaitStackDelete(Context, $"{stackName}-queue", profile);
       Console.WriteLine($"Deleted stack {stackName}-queue");
+  });
+
+Task("Setup")
+ .Does(() => {
+    var settings = new DockerComposeUpSettings {
+      Files = new [] { "test/infrastructure/docker-compose.yaml" },
+      DetachedMode = true,
+      Build = true
+    };
+
+    DockerComposeUp(settings);
+
+    Console.WriteLine($"{profile}cloudformation create-stack --stack-name {stackName}-queue --endpoint-url http://localhost:4581 --template-file sqs.yaml --capabilities CAPABILITY_IAM");
+    
+    RunCommand(Context, "aws",  new ProcessSettings {
+      Arguments = $"{profile}cloudformation create-stack --stack-name {stackName}-queue --endpoint-url http://localhost:4581 --template-file=sqs.yaml",
+      WorkingDirectory = new DirectoryPath("./aws/")
+    });
+
+    Console.WriteLine($"{profile}cloudformation deploy --stack-name {stackName}-lambda --endpoint-url http://localhost:4581 --region us-east-1 --template-file lambda.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}");
+    
+    RunCommand(Context, "aws",  new ProcessSettings {
+      Arguments = $"{profile}cloudformation deploy --stack-name {stackName}-lambda --endpoint-url http://localhost:4581 --region us-east-1 --template-file lambda.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}",
+      WorkingDirectory = new DirectoryPath("./aws/")
+    });
+
+    //Arguments = $"{profile}sqs create-queue --queue-name {stackName}-queue --endpoint-url http://localhost:4576 --region us-east-1",
+      //Arguments = $"{profile}cloudformation deploy --stack-name {stackName}-lambda --template-file lambda.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}",
+  });
+
+Task("Teardown")
+  .Does(() => {
+    var settings = new DockerComposeDownSettings {
+      Files = new [] { "test/infrastructure/docker-compose.yaml" }
+    };
+
+    DockerComposeDown(settings);
   });
 
 public static int RunCommand(ICakeContext context, string command, ProcessSettings settings = null) {

@@ -1,0 +1,45 @@
+name: AWS WebSocket EC2 Example
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  DOCKER_USERNAME: dgdw
+  AWS_DEFAULT_REGION: eu-west-2
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+      - name: Docker Login
+        uses: docker/login-action@v1.9.0
+        with:
+         username: ${{ env.DOCKER_USERNAME }}
+         password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Deploy
+        env:
+          DOCKERTAG: 1.0.${{ github.sha }}-${{ github.ref##*/ }}
+          AWSKEYNAME: dgdw-test
+          AWSVPCID: vpc-2321784a
+          AWSSUBNETS: subnet-620b4019,subnet-8580e5c8,subnet-8a05c0e3
+          CONFIGURATION: Release
+          S3BUCKET: aws-lambda-test-1
+          VCSREF: ${{ github.sha }}
+          VCSBRANCH: ${{ github.ref }}
+        run: ./build.sh --target=Deploy
