@@ -6,11 +6,11 @@ var date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
 var stackName = "aws-service-test";
 
 var vcsRef = EnvironmentVariable("VCSREF") ?? "";
-var vcsBranch = EnvironmentVariable("VCSBRANCH") ?? "";
+var vcsBranch = EnvironmentVariable("VCSBRANCH")?.Split('/').Last() ?? "";
 
 var tag = $"{vcsRef}-{vcsBranch}".Replace('/', '-');
 
-var isMasterBranch = vcsBranch == "master";
+var isMasterBranch = string.IsNullOrWhiteSpace(vcsBranch) || (vcsBranch == "master");
 
 var deploymentState = isMasterBranch ? "prod" : "dev";
 
@@ -132,7 +132,7 @@ Task("Deploy-Lambda")
 
 Task("Deploy-Stack")
   .Does(() => {
-    if (string.IsNullOrWhiteSpace(vcsBranch) || isMasterBranch)
+    if (isMasterBranch)
     {
       var result = RunCommand(Context, "aws", new ProcessSettings {
           Arguments = $"{profile}cloudformation deploy --stack-name {stackName}-queue --template-file sqs.yaml --capabilities CAPABILITY_IAM --parameter-overrides BucketName={bucketName} LambdaPackage={lambdaFilename}",
