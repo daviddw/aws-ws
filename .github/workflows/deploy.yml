@@ -32,9 +32,13 @@ jobs:
         with:
          username: ${{ env.DOCKER_USERNAME }}
          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
       - name: Deploy
         env:
-          DOCKERTAG: 1.0.${{ github.sha }}-${{ github.ref##*/ }}
+          DOCKERTAG: 1.0.${{ github.sha }}-${{ steps.extract_branch.outputs.branch }}
           AWSKEYNAME: dgdw-test
           AWSVPCID: vpc-2321784a
           AWSSUBNETS: subnet-620b4019,subnet-8580e5c8,subnet-8a05c0e3
