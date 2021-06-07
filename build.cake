@@ -113,7 +113,7 @@ Task("Publish-Docker")
 Task("Deploy-Docker")
   .IsDependentOn("Publish-Docker")
   .Does(() => {
-    DockerPush(dockerImage);
+    DockerPush(dockerImage, dockerImageTags);
 
     Console.WriteLine($"Published {dockerImage}");
   });
