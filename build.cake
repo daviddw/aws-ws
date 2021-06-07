@@ -113,11 +113,10 @@ Task("Publish-Docker")
 Task("Deploy-Docker")
   .IsDependentOn("Publish-Docker")
   .Does(() => {
-    var settings = new DockerImagePushSettings {
-        AllTags = true
+    DockerPush(dockerImageBranchTag);
+    if (isMasterBranch) {
+      DockerPush(dockerImageBranchLatest);
     }
-
-    DockerPush(settings, dockerImage);
 
     Console.WriteLine($"Published {dockerImage}");
   });
