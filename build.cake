@@ -115,7 +115,7 @@ Task("Deploy-Docker")
   .Does(() => {
     DockerPush(dockerImageBranchTag);
     if (isMasterBranch) {
-      DockerPush(dockerImageBranchLatest);
+      DockerPush(dockerImageLatestTag);
     }
 
     Console.WriteLine($"Published {dockerImage}");
