@@ -26,6 +26,7 @@ var subnets = EnvironmentVariable("AWSSUBNETS") ?? "";
 
 var dockerUser = EnvironmentVariable("DOCKERUSER") ?? "";
 
+var dockerImage = $"{dockerUser}/{stackName}";
 var dockerImageBranchTag = $"{dockerUser}/{stackName}:{tag}";
 var dockerImageLatestTag = $"{dockerUser}/{stackName}:latest";
 var dockerImageTags = isMasterBranch ? new [] { dockerImageBranchTag, dockerImageLatestTag } : new [] { dockerImageBranchTag };
@@ -112,9 +113,9 @@ Task("Publish-Docker")
 Task("Deploy-Docker")
   .IsDependentOn("Publish-Docker")
   .Does(() => {
-    DockerPush(dockerImageBranchTag);
+    DockerPush(dockerImage);
 
-    Console.WriteLine($"Published {dockerImageBranchTag}");
+    Console.WriteLine($"Published {dockerImage}");
   });
 
 Task("Deploy-Lambda")
